@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <setting id="login_name" type="bool" default="ColdGate" label="My Setting"/>
+    <setting id="login_password" type="bool" default="------" label="My Setting"/>
+</settings>
