@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
-    <setting id="login_name" type="text" default="ColdGate" label="Login"/>
-    <setting id="login_password" type="text" default="------" label="Password"/>
+    <setting id="login_name" type="text" default="-----" label="Login"/>
+    <setting id="login_password" type="text" default="-----" label="Password"/>
+    <setting id="gg_pages" type="select" values="1|2|3|4|5|All"  default="1" label="All streams pages fetch" />
 </settings>

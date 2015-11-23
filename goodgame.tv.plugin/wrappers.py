@@ -100,7 +100,7 @@ class KodiWrapper(GenericWrapper):
         if image_name.startswith('http:'):
             return image_name
 
-        plugin_id = 'plugin.video.goodgame'
+        plugin_id = 'goodgame.tv.plugin'
         addon = xbmcaddon.Addon(id=plugin_id)
         addon_path = (addon.getAddonInfo('path').decode('utf-8'))
         return xbmc.translatePath(

@@ -76,7 +76,7 @@ class GGKodi(object):
 
     def create_streams_menu(self):
         if self.game == 'gg' or self.game == 'favorites':
-            streams = gg_parser.get_streams_from_page(self.game)
+            streams = gg_parser.get_streams_from_page(plugin.addon, self.game)
         else:
             streams = gg_parser.get_streams_from_api(self.game)
 

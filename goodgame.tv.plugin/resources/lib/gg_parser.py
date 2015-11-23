@@ -21,7 +21,7 @@ else:
 
 GAMES_URL = 'http://goodgame.ru/channels/'
 LOGIN_URL = 'http://goodgame.ru/ajax/login/'
-ALL_STREAMS_URL = 'http://goodgame.ru/ajax/streams/channels/'
+ALL_STREAMS_JSON_URL = 'http://goodgame.ru/ajax/streams/selector/'
 STREAM_DIRECT_URL = 'http://hls.goodgame.ru/hls/%s_%s.m3u8'
 AVAILABLE_QUALITIES = [240, 480, 720, 1080]
 FAV_STREAMS_URL = 'http://goodgame.ru/channels/favorites/'
@@ -124,18 +124,25 @@ class WebLoader():
                 })
         return streams
 
-    def get_streams_from_page(self, type='gg'):
+    def get_streams_from_page(self, addon, type='gg'):
         page = 1
+        pages = addon.getSetting('gg_pages')
+        if pages == 'All':
+            pages = 100
+        else:
+            pages = int(pages)
+
         streams = []
-        streams_cells = 1
+        result = {'more':True}
         if type == 'gg':
-            while streams_cells:
-                postData = urllib.urlencode([('game', type), ('page', page)])
-                web_page = self.loadPage(ALL_STREAMS_URL, postData)
-                soup = BeautifulSoup(web_page, "html.parser")
-                streams_cells = soup.find_all('li')
-                streams = self.parse_allstreams_html(streams_cells, streams)
-                page = page + 1
+            while page <= pages & result['more'] == True:
+                print page
+                postData = urllib.urlencode([('page', page), ('tab', 'popular')])
+                result = self.loadPage(ALL_STREAMS_JSON_URL, postData)
+                result = json.loads(result)
+                streams += result['streams']
+                page += 1
+            streams = self.parse_allstreams(streams)
         else:
             web_page = self.loadPage(FAV_STREAMS_URL)
             soup = BeautifulSoup(web_page, "html.parser")
@@ -143,22 +150,26 @@ class WebLoader():
             streams = self.parse_favstreams_html(streams_cells)
         return streams
 
-    def parse_allstreams_html(self, streams_cells, streams=[]):
-        for stream_cell in streams_cells:
+    def parse_allstreams(self, allstreams):
+        streams = []
+        for stream in allstreams:
             try:
-                if stream_cell['data-isgoodgame'] != '1':
-                    continue
-
-                stream_id = stream_cell['id'].replace('c', '')
-                viewers = stream_cell.find('span', 'views').text.encode('utf-8')
-                title = stream_cell.find('span', 'stream-name').text.encode('utf-8')
-                author = stream_cell.find('span', 'streamer').text.encode('utf-8')
-                image_tag = stream_cell.find('img')
+                stream_id = stream['streamkey']
+                viewers = stream['viewers']
+                title = stream['title'].encode('utf-8')
+                author = stream['streamer'].encode('utf-8')
+                image_tag = stream['preview']
                 if image_tag is not None:
-                    image = image_tag['src'].replace('_240', '')
+                    image = image_tag.replace('_240', '')
                 else:
                     image = ''
-                for quality in AVAILABLE_QUALITIES:
+
+                if stream['premium']:
+                    qualities_list = AVAILABLE_QUALITIES
+                else:
+                    qualities_list = [1080]
+
+                for quality in qualities_list:
                     url = STREAM_DIRECT_URL % (stream_id, quality)
                     if quality == 1080:
                         url = url.replace('_1080', '')
@@ -262,8 +273,8 @@ def get_games(addon):
     return loader.get_games()
 
 
-def get_streams_from_page(game):
-    return loader.get_streams_from_page(game)
+def get_streams_from_page(addon, game):
+    return loader.get_streams_from_page(addon, game)
 
 
 def get_streams_from_api(game):
