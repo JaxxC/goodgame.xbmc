@@ -78,6 +78,11 @@ class KodiWrapper(GenericWrapper):
         li.setLabel2(stream['author'])
         li.setArt({'poster': stream['image'], 'banner': stream['image'], 'icon': 'DefaultFolder.png',
                    'thumb': 'DefaultFolder.png'})
+        # argsAdd = str(curX.ID) + "post"
+        # commands = []
+        # runnerAdd = "XBMC.RunScript(special://home/addons/goodgame.tv.plugin/resources/lib/subscribe.py, " + argsAdd + ")"
+        # commands.append(( 'Subscribe to channel', runnerAdd, ))
+        # li.addContextMenuItems( commands )
         self._add_to_dir(li, stream['url'], False)
 
     def _add_to_dir(self, li, url, is_folder):

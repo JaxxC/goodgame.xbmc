@@ -63,6 +63,16 @@ class WebLoader():
         self.cookie_jar.revert()
         self.opener = Opener(handler=urllib2.HTTPCookieProcessor(self.cookie_jar))
 
+    def set_addon(self, addon):
+        self.addon = addon
+        min_quality = int(self.addon.getSetting('min_quality'))
+        min_index =AVAILABLE_QUALITIES.index(min_quality)
+        max_quality = int(self.addon.getSetting('max_quality'))
+        max_index =AVAILABLE_QUALITIES.index(max_quality) + 1
+        if max_index < min_index:
+            max_index = min_index
+        self.available_qualities = AVAILABLE_QUALITIES[min_index:max_index]
+
     def loadPage(self, url, data=None):
         self.cookie_jar.load()
         web_page = self.opener.get_page(url, data)
@@ -103,7 +113,7 @@ class WebLoader():
             if not stream_id:
                 continue
 
-            for quality in AVAILABLE_QUALITIES:
+            for quality in self.available_qualities:
                 url = STREAM_DIRECT_URL % (stream_id, quality)
                 if quality == 1080:
                     url = url.replace('_1080', '')
@@ -124,16 +134,16 @@ class WebLoader():
                 })
         return streams
 
-    def get_streams_from_page(self, addon, type='gg'):
+    def get_streams_from_page(self, type='gg'):
         page = 1
-        pages = addon.getSetting('gg_pages')
+        pages = self.addon.getSetting('gg_pages')
         if pages == 'All':
             pages = 100
-        else:
-            pages = int(pages)
+        pages = int(pages)
 
         streams = []
         result = {'more':True}
+
         if type == 'gg':
             while page <= pages & result['more'] == True:
                 print page
@@ -165,7 +175,7 @@ class WebLoader():
                     image = ''
 
                 if stream['premium']:
-                    qualities_list = AVAILABLE_QUALITIES
+                    qualities_list = self.available_qualities
                 else:
                     qualities_list = [1080]
 
@@ -211,7 +221,7 @@ class WebLoader():
                     image = image_tag['src'].replace('_240', '')
                 else:
                     image = ''
-                for quality in AVAILABLE_QUALITIES:
+                for quality in self.available_qualities:
                     url = STREAM_DIRECT_URL % (stream_id, quality)
                     if quality == 1080:
                         url = url.replace('_1080', '')
@@ -254,11 +264,11 @@ class WebLoader():
         result = json.loads(result)
         return (result['code'] == 1 or result['code'] == 4)
 
-    def login(self, nickname, password):
+    def login(self):
         if self.is_logged_in():
             return True
 
-        loginData = [('nickname', nickname), ('password', password), ('remember', '1'), ('return', 'user')]
+        loginData = [('nickname', self.addon.getSetting('login_name')), ('password', self.addon.getSetting('login_password')), ('remember', '1'), ('return', 'user')]
         postData = urllib.urlencode(loginData)
         result = self.loadPage(LOGIN_URL, postData)
         print self.cookie_jar
@@ -268,14 +278,15 @@ class WebLoader():
 loader = WebLoader()
 
 
-def get_games(addon):
-    loader.login(addon.getSetting('login_name'),addon.getSetting('login_password'))
+def set_addon(addon):
+    loader.set_addon(addon)
+
+def get_games():
+    loader.login()
     return loader.get_games()
 
-
-def get_streams_from_page(addon, game):
-    return loader.get_streams_from_page(addon, game)
-
+def get_streams_from_page(game):
+    return loader.get_streams_from_page(game)
 
 def get_streams_from_api(game):
     return loader.get_streams_from_api(game)
