@@ -1,4 +1,5 @@
 #! /usr/bin/python
+# -*- coding: utf-8 -*-
 
 import os
 import urllib
@@ -25,6 +26,7 @@ ALL_STREAMS_JSON_URL = 'http://goodgame.ru/ajax/streams/selector/'
 STREAM_DIRECT_URL = 'http://hls.goodgame.ru/hls/%s_%s.m3u8'
 AVAILABLE_QUALITIES = [240, 480, 720, 1080]
 FAV_STREAMS_URL = 'http://goodgame.ru/channels/favorites/'
+ALL_STREAMS_URL = 'http://goodgame.ru/ajax/streams/channels/'
 STREAMS_API_URL = 'http://goodgame.ru/api/getchannelsbygame?game=%s&fmt=json'
 
 
@@ -66,9 +68,9 @@ class WebLoader():
     def set_addon(self, addon):
         self.addon = addon
         min_quality = int(self.addon.getSetting('min_quality'))
-        min_index =AVAILABLE_QUALITIES.index(min_quality)
+        min_index = AVAILABLE_QUALITIES.index(min_quality)
         max_quality = int(self.addon.getSetting('max_quality'))
-        max_index =AVAILABLE_QUALITIES.index(max_quality) + 1
+        max_index = AVAILABLE_QUALITIES.index(max_quality) + 1
         if max_index < min_index:
             max_index = min_index
         self.available_qualities = AVAILABLE_QUALITIES[min_index:max_index]
@@ -89,14 +91,18 @@ class WebLoader():
             for game_cell in games_cells:
                 try:
                     tag = re.findall('\/channels\/(.*?)\/', game_cell['href'], re.UNICODE)
-                    if not tag:
-                        tag = ['gg'];
                     image_tag = game_cell.find('img')
+
                     if image_tag is not None:
                         thumb = image_tag['src']
                     else:
                         thumb = ''
-                    title = game_cell.find('div').text.encode('utf-8')
+
+                    if not tag:
+                        tag = ['popular'];
+                        title = u'Популярные'.encode('utf-8')
+                    else:
+                        title = game_cell.find('div').text.encode('utf-8')
                 except TypeError:
                     continue
                 else:
@@ -120,7 +126,7 @@ class WebLoader():
                 if not self._is_stream_avaliable(url):
                     continue
 
-                title = '[%sp] %s - %s' % (quality, data[id]['key'], data[id]['title'])
+                title = self.make_title(quality, data[id]['key'], data[id]['title'])
                 image = data[id]['thumb'].replace('_240', '')
 
                 streams.append({
@@ -130,35 +136,56 @@ class WebLoader():
                     'author': data[id]['key'],
                     'url': url,
                     'viewers': data[id]['viewers'],
-                    'image': image
+                    'image': image,
+                    'type': 'stream'
                 })
         return streams
 
-    def get_streams_from_page(self, type='gg'):
-        page = 1
-        pages = self.addon.getSetting('gg_pages')
-        if pages == 'All':
-            pages = 100
-        pages = int(pages)
-
-        streams = []
-        result = {'more':True}
-
-        if type == 'gg':
-            while page <= pages & result['more'] == True:
-                print page
-                postData = urllib.urlencode([('page', page), ('tab', 'popular')])
-                result = self.loadPage(ALL_STREAMS_JSON_URL, postData)
-                result = json.loads(result)
-                streams += result['streams']
-                page += 1
-            streams = self.parse_allstreams(streams)
+    def get_streams_from_page(self, type='popular', page=1):
+        if type == 'popular':
+            streams = self.load_page_streams_popular(page)
+        elif type == 'rest':
+            streams = self.load_page_streams_rest(page)
         else:
             web_page = self.loadPage(FAV_STREAMS_URL)
             soup = BeautifulSoup(web_page, "html.parser")
             streams_cells = soup.find_all('li', 'channel')
             streams = self.parse_favstreams_html(streams_cells)
         return streams
+
+    def load_page_streams_popular(self, page):
+        postData = urllib.urlencode([('page', page), ('tab', 'popular')])
+        result = self.loadPage(ALL_STREAMS_JSON_URL, postData)
+        result = json.loads(result)
+        streams = self.parse_allstreams(result['streams'])
+
+        if result['more']:
+            streams.append(self.next_page(page, 'popular'))
+        return streams
+
+    def load_page_streams_rest(self, page):
+        postData = urllib.urlencode([('game', 'rest'), ('page', page)])
+        web_page = self.loadPage(ALL_STREAMS_URL, postData)
+        soup = BeautifulSoup(web_page, "html.parser")
+        streams_cells = soup.find_all('li')
+        streams = self.parse_reststreams_html(streams_cells)
+
+        if len(streams_cells) == 40:
+            streams.append(self.next_page(page, 'rest'))
+        return streams
+
+    def next_page(self, page, game):
+        return {
+            'title': '[COLOR=FFD02090]' +u"Следующая страница".encode('utf-8') + '[/COLOR]',
+            'url': {
+                'tag': game,
+                'page': str(int(page) + 1),
+            },
+            'type': 'next'
+        }
+
+    def make_title(self, quality, author, title):
+        return '[COLOR=FFFFFF00][%sp][/COLOR][COLOR=FF00BFFF][B] %s[/B][/COLOR] - %s' % (quality, author, title)
 
     def parse_allstreams(self, allstreams):
         streams = []
@@ -187,13 +214,51 @@ class WebLoader():
                         continue
 
                     streams.append({
-                        'title': '[%sp] %s - %s' % (quality, author, title),
+                        'title': self.make_title(quality, author, title),
                         'title2': title,
                         'quality': quality,
                         'author': author,
                         'url': url,
                         'viewers': viewers,
-                        'image': image
+                        'image': image,
+                        'type': 'stream'
+                    })
+            except TypeError:
+                continue
+        return streams
+
+    def parse_reststreams_html(self, streams_cells):
+        streams = []
+        for stream_cell in streams_cells:
+            try:
+                if stream_cell['data-isgoodgame'] != '1':
+                    continue
+
+                stream_id = stream_cell['id'].replace('c', '')
+                viewers = stream_cell.find('span', 'views').text.encode('utf-8')
+                title = stream_cell.find('span', 'stream-name').text.encode('utf-8')
+                author = stream_cell.find('span', 'streamer').text.encode('utf-8')
+                image_tag = stream_cell.find('img')
+                if image_tag is not None:
+                    image = image_tag['src'].replace('_240', '')
+                else:
+                    image = ''
+                for quality in self.available_qualities:
+                    url = STREAM_DIRECT_URL % (stream_id, quality)
+                    if quality == 1080:
+                        url = url.replace('_1080', '')
+                    if not self._is_stream_avaliable(url):
+                        continue
+
+                    streams.append({
+                        'title': self.make_title(quality, author, title),
+                        'title2': title,
+                        'quality': quality,
+                        'author': author,
+                        'url': url,
+                        'viewers': viewers,
+                        'image': image,
+                        'type': 'stream'
                     })
             except TypeError:
                 continue
@@ -229,13 +294,14 @@ class WebLoader():
                         continue
 
                     streams.append({
-                        'title': '[%sp] %s - %s' % (quality, author, title),
+                        'title': self.make_title(quality, author, title),
                         'title2': title,
                         'quality': quality,
                         'author': author,
                         'url': url,
                         'viewers': viewers,
-                        'image': image
+                        'image': image,
+                        'type': 'stream'
                     })
             except TypeError:
                 continue
@@ -268,7 +334,8 @@ class WebLoader():
         if self.is_logged_in():
             return True
 
-        loginData = [('nickname', self.addon.getSetting('login_name')), ('password', self.addon.getSetting('login_password')), ('remember', '1'), ('return', 'user')]
+        loginData = [('nickname', self.addon.getSetting('login_name')),
+                     ('password', self.addon.getSetting('login_password')), ('remember', '1'), ('return', 'user')]
         postData = urllib.urlencode(loginData)
         result = self.loadPage(LOGIN_URL, postData)
         print self.cookie_jar
@@ -281,12 +348,15 @@ loader = WebLoader()
 def set_addon(addon):
     loader.set_addon(addon)
 
+
 def get_games():
     loader.login()
     return loader.get_games()
 
-def get_streams_from_page(game):
-    return loader.get_streams_from_page(game)
+
+def get_streams_from_page(game, page):
+    return loader.get_streams_from_page(game, page)
+
 
 def get_streams_from_api(game):
     return loader.get_streams_from_api(game)

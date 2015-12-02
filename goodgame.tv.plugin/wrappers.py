@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright (c) 2015 Niko Yakovlev <vegasq@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +21,7 @@ import urlparse
 
 try:
     import xbmc
+    import urllib
     import xbmcaddon
     import xbmcgui
     import xbmcplugin
@@ -69,21 +71,25 @@ class KodiWrapper(GenericWrapper):
     # }
     def add_stream(self, stream):
         li = xbmcgui.ListItem(stream['title'])
-        info = {
-            'title': stream['title2'],
-            'artist': list([stream['author']]),
-            'plot': 'Plot'
-        }
-        li.setInfo(type=u'video', infoLabels=info)
-        li.setLabel2(stream['author'])
-        li.setArt({'poster': stream['image'], 'banner': stream['image'], 'icon': 'DefaultFolder.png',
-                   'thumb': 'DefaultFolder.png'})
-        # argsAdd = str(curX.ID) + "post"
-        # commands = []
-        # runnerAdd = "XBMC.RunScript(special://home/addons/goodgame.tv.plugin/resources/lib/subscribe.py, " + argsAdd + ")"
-        # commands.append(( 'Subscribe to channel', runnerAdd, ))
-        # li.addContextMenuItems( commands )
-        self._add_to_dir(li, stream['url'], False)
+        if stream['type'] == 'next':
+            stream['url'] = '%s?%s' % (sys.argv[0], urllib.urlencode(stream['url']))
+            # stream['url'] = sys.argv[0]+"?page="+urllib.quote_plus(stream['url']['page'])+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&page="+str(page)
+            self._add_to_dir(li, stream['url'], True)
+        else:
+            info = {
+                'title': stream['title2'],
+                'artist': list([stream['author']]),
+                'plot': 'Plot'
+            }
+            li.setInfo(type=u'video', infoLabels=info)
+            li.setLabel2(stream['author'])
+            li.setArt({'poster': stream['image'], 'banner': stream['image'], 'fanart': stream['image'], 'icon': 'DefaultVideo.png', 'thumb': 'DefaultVideo.png'})
+            # argsAdd = str(curX.ID) + "post"
+            # commands = []
+            # runnerAdd = "XBMC.RunScript(special://home/addons/goodgame.tv.plugin/resources/lib/subscribe.py, " + argsAdd + ")"
+            # commands.append(( 'Subscribe to channel', runnerAdd, ))
+            # li.addContextMenuItems( commands )
+            self._add_to_dir(li, stream['url'], False)
 
     def _add_to_dir(self, li, url, is_folder):
         xbmcplugin.addDirectoryItem(
@@ -128,3 +134,10 @@ def get_game_tag(kodi):
         return args['tag'][0]
 
     return False
+
+def get_page(kodi):
+    args = urlparse.parse_qs(sys.argv[2][1:])
+    if 'page' in args:
+        return args['page'][0]
+
+    return 1

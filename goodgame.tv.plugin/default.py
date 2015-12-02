@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright (c) 2015 Niko Yakovlev <vegasq@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +24,7 @@ import urllib
 
 from wrappers import get_kodi
 from wrappers import get_game_tag
+from wrappers import get_page
 
 from xbmcswift2 import Plugin
 # Create xbmcswift2 plugin instance.
@@ -44,6 +46,9 @@ class GGKodi(object):
 
     def set_game(self, game):
         self.game = game
+
+    def set_page(self, page):
+        self.page = page
 
     def _build_url(self, query):
         return sys.argv[0] + '?' + urllib.urlencode(query)
@@ -67,8 +72,10 @@ class GGKodi(object):
         self._kodi.commit()
 
     def create_streams_menu(self):
-        if self.game == 'gg' or self.game == 'favorites':
-            streams = gg_parser.get_streams_from_page(self.game)
+        if self.game == 'gg':
+            self.game == 'popular'
+        if self.game == 'popular' or self.game == 'favorites' or self.game == 'rest':
+            streams = gg_parser.get_streams_from_page(self.game, self.page)
         else:
             streams = gg_parser.get_streams_from_api(self.game)
 
@@ -83,10 +90,12 @@ class GGKodi(object):
 if __name__ == '__main__':
     kodi_wrapper = get_kodi()
     game_tag = get_game_tag(kodi_wrapper)
+    page = get_page(kodi_wrapper)
     ggk = GGKodi(kodi_wrapper)
 
     if game_tag is False:
         ggk.create_main_menu()
     else:
         ggk.set_game(game_tag)
+        ggk.set_page(page)
         ggk.create_streams_menu()
