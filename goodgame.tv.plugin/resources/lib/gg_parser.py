@@ -25,7 +25,7 @@ LOGIN_URL = 'http://goodgame.ru/ajax/login/'
 ALL_STREAMS_JSON_URL = 'http://goodgame.ru/ajax/streams/selector/'
 STREAM_DIRECT_URL = 'http://hls.goodgame.ru/hls/%s_%s.m3u8'
 AVAILABLE_QUALITIES = [240, 480, 720, 1080]
-FAV_STREAMS_URL = 'http://goodgame.ru/channels/favorites/'
+FAV_STREAMS_URL = 'http://goodgame.ru/view/?q=/channels/favorites/'
 ALL_STREAMS_URL = 'http://goodgame.ru/ajax/streams/channels/'
 STREAMS_API_URL = 'http://goodgame.ru/api/getchannelsbygame?game=%s&fmt=json'
 
@@ -83,6 +83,11 @@ class WebLoader():
 
     def get_games(self):
         web_page = self.loadPage(GAMES_URL)
+        search = re.findall('__DDOS_COOKIE=([a-z0-9]*);.*max-age=([0-9]+)', web_page)
+        if search:
+            ck = cookielib.Cookie(version=0, name='__DDOS_COOKIE', value=search[0][0], port=None, port_specified=False, domain='goodgame.ru', domain_specified=False, domain_initial_dot=False, path='/', path_specified=True, secure=False, expires=None, discard=True, comment=None, comment_url=None, rest={'HttpOnly': None}, rfc2109=False)
+            self.add_ddos_cookie(ck)
+            web_page = self.loadPage(GAMES_URL)
         soup = BeautifulSoup(web_page, "html.parser")
         games_div = soup.find('div', 'swiper-container')
         games = []
@@ -148,6 +153,11 @@ class WebLoader():
             streams = self.load_page_streams_rest(page)
         else:
             web_page = self.loadPage(FAV_STREAMS_URL)
+            search = re.findall('__DDOS_COOKIE=([a-z0-9]*);.*max-age=([0-9]+)', web_page)
+            if search:
+                ck = cookielib.Cookie(version=0, name='__DDOS_COOKIE', value=search[0][0], port=None, port_specified=False, domain='goodgame.ru', domain_specified=False, domain_initial_dot=False, path='/', path_specified=True, secure=False, expires=None, discard=True, comment=None, comment_url=None, rest={'HttpOnly': None}, rfc2109=False)
+                self.add_ddos_cookie(ck)
+                web_page = self.loadPage(FAV_STREAMS_URL)
             soup = BeautifulSoup(web_page, "html.parser")
             streams_cells = soup.find_all('li', 'channel')
             streams = self.parse_favstreams_html(streams_cells)
@@ -269,7 +279,7 @@ class WebLoader():
         for stream_cell in streams_cells:
             try:
                 if stream_cell.find('div', 'offline'):
-                    return streams
+                    continue
 
                 a = stream_cell.find('a', href="/")
                 stream = re.findall('return obj_unsubscribe\(.*, (.*?),.*', a['onclick'], re.UNICODE)
@@ -330,6 +340,9 @@ class WebLoader():
         result = json.loads(result)
         return (result['code'] == 1 or result['code'] == 4)
 
+    def add_ddos_cookie(self, cookie):
+        self.cookie_jar.set_cookie(cookie)
+
     def login(self):
         if self.is_logged_in():
             return True
@@ -338,7 +351,6 @@ class WebLoader():
                      ('password', self.addon.getSetting('login_password')), ('remember', '1'), ('return', 'user')]
         postData = urllib.urlencode(loginData)
         result = self.loadPage(LOGIN_URL, postData)
-        print self.cookie_jar
         return self.check_login_error(result)
 
 
