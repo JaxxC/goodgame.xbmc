@@ -244,7 +244,7 @@ class WebLoader():
                 if stream_cell['data-isgoodgame'] != '1':
                     continue
 
-                stream_id = stream_cell['id'].replace('c', '')
+                stream_id = re.sub('^c', '', stream_cell['id'])
                 viewers = stream_cell.find('span', 'views').text.encode('utf-8')
                 title = stream_cell.find('span', 'stream-name').text.encode('utf-8')
                 author = stream_cell.find('span', 'streamer').text.encode('utf-8')
@@ -281,12 +281,7 @@ class WebLoader():
                 if stream_cell.find('div', 'offline'):
                     continue
 
-                a = stream_cell.find('a', href="/")
-                stream = re.findall('return obj_unsubscribe\(.*, (.*?),.*', a['onclick'], re.UNICODE)
-                if stream:
-                    stream_id = stream[0]
-                else:
-                    continue
+                stream_id = re.sub('^c', '', stream_cell['id'])
 
                 viewers = stream_cell.find('span', 'views').text.encode('utf-8')
                 title = stream_cell.find('span', 'stream-name').text.encode('utf-8')
