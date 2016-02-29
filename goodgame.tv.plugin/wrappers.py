@@ -93,6 +93,7 @@ class KodiWrapper(GenericWrapper):
             com_unsubscribe = u'RunScript({addon_path}/resources/lib/subscribe.py,unsubscribe,{stream_id},{author})'.format(addon_path=addon_path,
                                                                                                                         stream_id=urllib.quote_plus(stream['stream_id'].encode('utf-8')),
                                                                                                                         author=stream['author'].encode('utf-8'))
+
             if stream['type'] == 'stream':
                 commands.append(( u'Подписаться', com_subscribe))
             elif stream['type'] == 'fav':

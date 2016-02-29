@@ -1,5 +1,6 @@
 # goodgame.xbmc
-goodgame XBMC (Kodi) plugin
+goodgame.ru XBMC (Kodi) plugin
+Плагин для просмотра стримов сервиса goodgame.ru
 
 # История версий
 0.9 - Добавлена возможность подписываться и отписываться от каналов в контекстном меню

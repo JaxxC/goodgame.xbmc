@@ -87,8 +87,7 @@ class WebLoader():
         web_page = self.loadPage(GAMES_URL)
         search = re.findall('__DDOS_COOKIE=([a-z0-9]*);.*max-age=([0-9]+)', web_page)
         if search:
-            ck = cookielib.Cookie(version=0, name='__DDOS_COOKIE', value=search[0][0], port=None, port_specified=False, domain='goodgame.ru', domain_specified=False, domain_initial_dot=False, path='/', path_specified=True, secure=False, expires=None, discard=True, comment=None, comment_url=None, rest={'HttpOnly': None}, rfc2109=False)
-            self.add_ddos_cookie(ck)
+            self.add_ddos_cookie(search)
             web_page = self.loadPage(GAMES_URL)
         soup = BeautifulSoup(web_page, "html.parser")
         games_div = soup.find('div', 'swiper-container')
@@ -145,7 +144,7 @@ class WebLoader():
                     'viewers': data[id]['viewers'],
                     'image': image,
                     'type': 'stream',
-                    'stream_id' : stream_id
+                    'stream_id': stream_id
                 })
         return streams
 
@@ -158,8 +157,7 @@ class WebLoader():
             web_page = self.loadPage(FAV_STREAMS_URL)
             search = re.findall('__DDOS_COOKIE=([a-z0-9]*);.*max-age=([0-9]+)', web_page)
             if search:
-                ck = cookielib.Cookie(version=0, name='__DDOS_COOKIE', value=search[0][0], port=None, port_specified=False, domain='goodgame.ru', domain_specified=False, domain_initial_dot=False, path='/', path_specified=True, secure=False, expires=None, discard=True, comment=None, comment_url=None, rest={'HttpOnly': None}, rfc2109=False)
-                self.add_ddos_cookie(ck)
+                self.add_ddos_cookie(search)
                 web_page = self.loadPage(FAV_STREAMS_URL)
             soup = BeautifulSoup(web_page, "html.parser")
             streams_cells = soup.find_all('li', 'channel')
@@ -189,7 +187,7 @@ class WebLoader():
 
     def next_page(self, page, game):
         return {
-            'title': '[COLOR=FFD02090]' +u"Следующая страница".encode('utf-8') + '[/COLOR]',
+            'title': '[COLOR=FFD02090]' + u"Следующая страница".encode('utf-8') + '[/COLOR]',
             'url': {
                 'tag': game,
                 'page': str(int(page) + 1),
@@ -235,7 +233,7 @@ class WebLoader():
                         'viewers': viewers,
                         'image': image,
                         'type': 'stream',
-                        'stream_id' : stream_id
+                        'stream_id': stream_id
                     })
             except TypeError:
                 continue
@@ -273,7 +271,7 @@ class WebLoader():
                         'viewers': viewers,
                         'image': image,
                         'type': 'stream',
-                        'stream_id' : stream_id
+                        'stream_id': stream_id
                     })
             except TypeError:
                 continue
@@ -312,7 +310,7 @@ class WebLoader():
                         'viewers': viewers,
                         'image': image,
                         'type': 'fav',
-                        'stream_id' : stream_id
+                        'stream_id': stream_id
                     })
             except TypeError:
                 continue
@@ -341,8 +339,12 @@ class WebLoader():
         result = json.loads(result)
         return (result['code'] == 1 or result['code'] == 4)
 
-    def add_ddos_cookie(self, cookie):
-        self.cookie_jar.set_cookie(cookie)
+    def add_ddos_cookie(self, search):
+        ck = cookielib.Cookie(version=0, name='__DDOS_COOKIE', value=search[0][0], port=None, port_specified=False,
+                                  domain='goodgame.ru', domain_specified=False, domain_initial_dot=False, path='/',
+                                  path_specified=True, secure=False, expires=None, discard=True, comment=None,
+                                  comment_url=None, rest={'HttpOnly': None}, rfc2109=False)
+        self.cookie_jar.set_cookie(ck)
 
     def login(self):
         if self.is_logged_in():
@@ -382,7 +384,8 @@ def get_streams_from_page(game, page):
 def get_streams_from_api(game):
     return loader.get_streams_from_api(game)
 
-def subscribe(channelId,sub=1):
+
+def subscribe(channelId, sub=1):
     if sub:
         loader.subscribe(channelId)
     else:
