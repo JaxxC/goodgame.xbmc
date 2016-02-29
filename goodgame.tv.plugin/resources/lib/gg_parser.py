@@ -28,6 +28,8 @@ AVAILABLE_QUALITIES = [240, 480, 720, 1080]
 FAV_STREAMS_URL = 'http://goodgame.ru/view/?q=/channels/favorites/'
 ALL_STREAMS_URL = 'http://goodgame.ru/ajax/streams/channels/'
 STREAMS_API_URL = 'http://goodgame.ru/api/getchannelsbygame?game=%s&fmt=json'
+SUBSCRIBE_URL = 'http://goodgame.ru/ajax/subscribe/'
+UNSUBSCRIBE_URL = 'http://goodgame.ru/ajax/unsubscribe/'
 
 
 class Opener(object):
@@ -142,7 +144,8 @@ class WebLoader():
                     'url': url,
                     'viewers': data[id]['viewers'],
                     'image': image,
-                    'type': 'stream'
+                    'type': 'stream',
+                    'stream_id' : stream_id
                 })
         return streams
 
@@ -231,7 +234,8 @@ class WebLoader():
                         'url': url,
                         'viewers': viewers,
                         'image': image,
-                        'type': 'stream'
+                        'type': 'stream',
+                        'stream_id' : stream_id
                     })
             except TypeError:
                 continue
@@ -268,7 +272,8 @@ class WebLoader():
                         'url': url,
                         'viewers': viewers,
                         'image': image,
-                        'type': 'stream'
+                        'type': 'stream',
+                        'stream_id' : stream_id
                     })
             except TypeError:
                 continue
@@ -306,7 +311,8 @@ class WebLoader():
                         'url': url,
                         'viewers': viewers,
                         'image': image,
-                        'type': 'stream'
+                        'type': 'fav',
+                        'stream_id' : stream_id
                     })
             except TypeError:
                 continue
@@ -348,6 +354,14 @@ class WebLoader():
         result = self.loadPage(LOGIN_URL, postData)
         return self.check_login_error(result)
 
+    def subscribe(self, channelId):
+        postData = urllib.urlencode([('obj', channelId), ('obj_type', 7)])
+        self.loadPage(SUBSCRIBE_URL, postData)
+
+    def unsubscribe(self, channelId):
+        postData = urllib.urlencode([('obj', channelId), ('obj_type', 7)])
+        self.loadPage(UNSUBSCRIBE_URL, postData)
+
 
 loader = WebLoader()
 
@@ -367,3 +381,9 @@ def get_streams_from_page(game, page):
 
 def get_streams_from_api(game):
     return loader.get_streams_from_api(game)
+
+def subscribe(channelId,sub=1):
+    if sub:
+        loader.subscribe(channelId)
+    else:
+        loader.unsubscribe(channelId)

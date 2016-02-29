@@ -1,27 +1,26 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="goodgame.tv.plugin" name="GoodGame" version="0.8.2" provider-name="Jaxx Colgate">
-  <requires>
-    <import addon="xbmc.python" version="2.14.0"/>
-    <import addon="script.module.requests" version="2.3.0"/>
-    <import addon="script.module.pyxbmct" version="1.1.4"/>
-    <import addon="script.module.xbmcswift2" version="2.4.0"/>
-    <import addon="script.module.beautifulsoup4" version="4.3.0"/>
-    <import addon="script.module.html5lib" version="0.999.0"/>
-    <import addon="script.module.six" version="1.4.0"/>
-  </requires>
-  <extension point="xbmc.python.pluginsource" library="default.py">
-    <provides>video</provides>
-  </extension>
-  <extension point="xbmc.addon.metadata">
-    <summary lang="en">GoodGame streams plugin</summary>
-    <description lang="en">With Love from Ukraine for GG!!</description>
-    <disclaimer lang="en"></disclaimer>
-    <language></language>
-    <platform>all</platform>
-    <license></license>
-    <forum>goodgame.ru/topic/47719/</forum>
-    <website>http://nothanks.com</website>
-    <email>jaxx_colgate@mail.ru</email>
-    <source>https://github.com/JaxxC/goodgame.xmbc</source>
-  </extension>
+<addon id="goodgame.tv.plugin" name="GoodGame" version="0.9" provider-name="Jaxx Colgate">
+    <requires>
+        <import addon="xbmc.python" version="2.14.0"/>
+        <import addon="script.module.requests" version="2.3.0"/>
+        <import addon="script.module.xbmcswift2" version="2.4.0"/>
+        <import addon="script.module.beautifulsoup4" version="4.3.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="default.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en">GoodGame.ru streams plugin</summary>
+        <summary lang="ru">GoodGame.ru плагин стримов</summary>
+        <summary lang="uk">GoodGame.ru плагін стрімів</summary>
+        <description lang="en">Addon for watching streams from GoodGame.ru.</description>
+        <description lang="ru">Дополнение для просмотра стримов c GoodGame.ru.</description>
+        <description lang="uk">Надбудова для прегляду стрімів з GoodGame.ru.</description>
+        <platform>all</platform>
+        <license></license>
+        <forum>goodgame.ru/topic/47719/</forum>
+        <website>http://nothanks.com</website>
+        <email>jaxx_colgate@mail.ru</email>
+        <source>https://github.com/JaxxC/goodgame.xbmc</source>
+    </extension>
 </addon>

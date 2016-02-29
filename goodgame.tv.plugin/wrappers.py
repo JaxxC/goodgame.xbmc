@@ -28,6 +28,8 @@ try:
 
     addon_handle = int(sys.argv[1])
     xbmcplugin.setContent(addon_handle, 'movies')
+    addon = xbmcaddon.Addon()
+    addon_path = addon.getAddonInfo('path').decode('utf-8')
     is_xbmc = True
 except ImportError:
     is_xbmc = False
@@ -73,7 +75,6 @@ class KodiWrapper(GenericWrapper):
         li = xbmcgui.ListItem(stream['title'])
         if stream['type'] == 'next':
             stream['url'] = '%s?%s' % (sys.argv[0], urllib.urlencode(stream['url']))
-            # stream['url'] = sys.argv[0]+"?page="+urllib.quote_plus(stream['url']['page'])+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&page="+str(page)
             self._add_to_dir(li, stream['url'], True)
         else:
             info = {
@@ -84,11 +85,21 @@ class KodiWrapper(GenericWrapper):
             li.setInfo(type=u'video', infoLabels=info)
             li.setLabel2(stream['author'])
             li.setArt({'poster': stream['image'], 'banner': stream['image'], 'fanart': stream['image'], 'icon': 'DefaultVideo.png', 'thumb': 'DefaultVideo.png'})
-            # argsAdd = str(curX.ID) + "post"
-            # commands = []
-            # runnerAdd = "XBMC.RunScript(special://home/addons/goodgame.tv.plugin/resources/lib/subscribe.py, " + argsAdd + ")"
-            # commands.append(( 'Subscribe to channel', runnerAdd, ))
-            # li.addContextMenuItems( commands )
+
+            commands = []
+            com_subscribe = u'RunScript({addon_path}/resources/lib/subscribe.py,subscribe,{stream_id},{author})'.format(addon_path=addon_path,
+                                                                                                                        stream_id=urllib.quote_plus(stream['stream_id'].encode('utf-8')),
+                                                                                                                        author=stream['author'].encode('utf-8'))
+            com_unsubscribe = u'RunScript({addon_path}/resources/lib/subscribe.py,unsubscribe,{stream_id},{author})'.format(addon_path=addon_path,
+                                                                                                                        stream_id=urllib.quote_plus(stream['stream_id'].encode('utf-8')),
+                                                                                                                        author=stream['author'].encode('utf-8'))
+            if stream['type'] == 'stream':
+                commands.append(( u'Подписаться', com_subscribe))
+            elif stream['type'] == 'fav':
+                commands.append(( u'Отписаться', com_unsubscribe))
+
+            li.addContextMenuItems( commands )
+
             self._add_to_dir(li, stream['url'], False)
 
     def _add_to_dir(self, li, url, is_folder):
