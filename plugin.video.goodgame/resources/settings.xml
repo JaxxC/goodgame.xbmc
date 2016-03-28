@@ -12,7 +12,7 @@
     </category>
     <category label="Качество">
         <setting label="Только лучшее качество" type="bool" id="q_best" default="false"/>
-        <setting visible="eq(-1,false)" label="Select qualities" type="lsep"/>
+        <setting visible="eq(-1,false)" label="Выбор потоков" type="lsep"/>
         <setting enable="eq(-2,false)" visible="eq(-2,false)" label="Mobile" type="bool" id="q_mobile" default="true"/>
         <setting enable="eq(-3,false)" visible="eq(-3,false)" label="Low" type="bool" id="q_low" default="false"/>
         <setting enable="eq(-4,false)" visible="eq(-4,false)" label="Medium" type="bool" id="q_medium" default="false"/>
