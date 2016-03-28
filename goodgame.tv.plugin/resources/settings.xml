@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<settings>
-    <setting id="login_name" type="text" default="-----" label="Login"/>
-    <setting id="login_password" type="text" default="-----" label="Password"/>
-    <setting id="min_quality" type="select" values="240|480|720|1080" default="240" label="Minimal quality" />
-    <setting id="max_quality" type="select" values="240|480|720|1080" default="1080" label="Maximal quality" />
-</settings>

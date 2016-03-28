@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <category label="Login">
+        <setting id="login_name" type="text" default="" label="Login"/>
+        <setting id="login_password" type="text" default="" label="Password"/>
+        <setting label="Очистить Cookies" type="action" action="RunScript(special://home/addons/plugin.video.goodgame/resources/lib/commands.py, delcookies)"/>
+    </category>
+    <category label="Additional Platforms">
+        <setting label="Twitch" type="bool" id="p_twitch" default="false"/>
+        <setting label="Cybergame" visible="false" type="bool" id="p_cybergame" default="false"/>
+        <setting label="Youtube" visible="false" type="bool" id="p_youtube" default="false"/>
+    </category>
+    <category label="Quality">
+        <setting label="Best Only" type="bool" id="q_best" default="false"/>
+        <setting visible="eq(-1,false)" label="Select qualities" type="lsep"/>
+        <setting enable="eq(-2,false)" visible="eq(-2,false)" label="Mobile" type="bool" id="q_mobile" default="true"/>
+        <setting enable="eq(-3,false)" visible="eq(-3,false)" label="Low" type="bool" id="q_low" default="false"/>
+        <setting enable="eq(-4,false)" visible="eq(-4,false)" label="Medium" type="bool" id="q_medium" default="false"/>
+        <setting enable="eq(-5,false)" visible="eq(-5,false)" label="High" type="bool" id="q_high" default="false"/>
+        <setting enable="eq(-6,false)" visible="eq(-6,false)" label="Source" type="bool" id="q_source" default="false"/>
+    </category>
+</settings>
