@@ -2,15 +2,18 @@
 # -*- coding: utf-8 -*-
 
 import urllib
-import httplib
 import re
 import json
 import requests
+import video
 from bs4 import BeautifulSoup
 from twitch import TwitchParser
 
 
 GAMES_URL = 'http://goodgame.ru/channels/'
+GAMES_VIDEOS_URL = 'http://goodgame.ru/video/'
+VIDEOS_PAGE_URL = 'http://goodgame.ru/view'
+VIDEOS_SEARCH_PAGE_URL = 'http://goodgame.ru/search/videos/%s/page/%s/'
 LOGIN_URL = 'http://goodgame.ru/ajax/login/'
 ALL_STREAMS_JSON_URL = 'http://goodgame.ru/ajax/streams/selector/'
 STREAM_DIRECT_URL = 'http://hls.goodgame.ru/hls/%s_%s.m3u8'
@@ -59,7 +62,8 @@ class GGParser:
         games_div = soup.find('div', 'swiper-container')
         games = []
 
-        games.append({'cover': self.local_media('gm_all-translations_poster.jpg'), 'tag': 'all', 'title': u'Все стримы'})
+        games.append({'cover': self.local_media('gm_all-translations_poster.jpg'), 'tag': 'all', 'title': u'Все стримы', 'type':'streams'})
+        games.append({'cover': self.local_media('gm_all-videos_poster.jpg'), 'tag': 'list', 'title': u'Видеозаписи', 'type':'videos'})
         if games_div is not None:
             games_cells = games_div.find_all('a')
             for game_cell in games_cells:
@@ -73,11 +77,93 @@ class GGParser:
                             thumb = image_tag['src']
                         else:
                             thumb = ''
-                        games.append({'cover': thumb, 'tag': tag[0], 'title': title})
+                        games.append({'cover': thumb, 'tag': tag[0], 'title': title, 'type':'streams'})
                 except TypeError:
                     continue
 
         return games
+
+    def parse_games_vods(self):
+        web_page = self.loader.load_page(GAMES_VIDEOS_URL)
+        soup = BeautifulSoup(web_page, "html.parser")
+        games_div = soup.find('div', 'swiper-container')
+        games = []
+
+        games.append({'cover': self.local_media('gm_all-videos_poster.jpg'), 'tag': 'all', 'title': u'Все видеозаписи'})
+        if self.loader.is_logged_in():
+            games.append({'cover': self.local_media('gm_fav-videos_poster.jpg'), 'tag': 'by-channels', 'title': u'Мои подписки'})
+        games.append({'cover': self.local_media('gm_date-videos_poster.jpg'), 'tag': 'by-date', 'title': u'Самые свежие'})
+        games.append({'cover': self.local_media('gm_rating-videos_poster.jpg'), 'tag': 'by-rating', 'title': u'Лучшие за месяц'})
+        games.append({'cover': self.local_media('gm_search-videos_poster.jpg'), 'tag': 'search', 'title': u'Поиск'})
+        if games_div is not None:
+            games_cells = games_div.find_all('a')
+            for game_cell in games_cells:
+                try:
+                    tag = re.findall('\/video\/game\/(.*?)\/', game_cell['href'], re.UNICODE)
+                    if tag:
+                        title = game_cell.find('div').text
+                        image_tag = game_cell.find('img')
+
+                        if image_tag is not None:
+                            thumb = image_tag['src']
+                        else:
+                            thumb = ''
+                        games.append({'cover': thumb, 'tag': 'game/'+tag[0], 'title': title, 'type':'streams'})
+                except TypeError:
+                    continue
+        return games
+
+    def load_videos(self, tag, page):
+        if tag == 'all':
+            postData = urllib.urlencode([('q', '/video/page/'+page)])
+        else:
+            postData = urllib.urlencode([('q', '/video/'+tag+'/page/'+page)])
+
+        web_page = self.loader.load_page(VIDEOS_PAGE_URL, postData)
+        soup = BeautifulSoup(web_page, "html.parser")
+        return self.parse_videos(soup, page, tag)
+
+    def search_videos(self,query, page):
+        web_page = self.loader.load_page(VIDEOS_SEARCH_PAGE_URL % (query, page))
+        soup = BeautifulSoup(web_page, "html.parser")
+        return self.parse_videos(soup, page, 'search', query)
+
+    def parse_videos(self, soup, page, tag, query=''):
+        videos = soup.find_all('div', attrs={'class': 'video_block'})
+        pages_total = 0
+        pagination = soup.find('ol', attrs={'class': 'nav'})
+        if pagination:
+            pagination = pagination.find_all('li')
+            pages_total = int(pagination[-1].text)
+
+        vlist = []
+        if videos:
+            for video in videos:
+                item = video.find('div', attrs={'class': 'video_item'})
+                a=item.find('a')
+                img = item.find('img')
+                match = re.search('goodgame.ru\/video\/(\d+)',a['href'])
+                author = video.find('div', attrs={'class': 'video_autor'}).text.strip('\t\r\n')
+                vlist.append({
+                    'id': match.group(1),
+                    'title': self.make_video_title(author, video['title']),
+                    'title2': video['title'],
+                    'author': author,
+                    'url': a['href'],
+                    # 'viewers': stream['viewers'],
+                    'image': img['src'],
+                    'poster':img['src'],
+                    'type': 'vod'
+                })
+        if int(page) < int(pages_total):
+            vlist.append(self.next_video_page(page, pages_total, tag, query))
+
+        return vlist
+
+    def load_video_page(self, video_id):
+        web_page = self.loader.load_page(GAMES_VIDEOS_URL + video_id)
+        soup = BeautifulSoup(web_page, "html.parser")
+        return video.parse_players(soup, self.loader)
 
     def load_page_streams_apiv2(self, game='', page=1):
         data = requests.get(STREAMS_API_URL % (game, page))
@@ -267,6 +353,19 @@ class GGParser:
             'type': 'next'
         }
 
+    def next_video_page(self, page, pages_total, tag, query):
+        next_page = str(int(page) + 1)
+        return {
+            'title': '[COLOR=FFD02090]' +u"Следующая страница (%s из %s)" % (next_page, pages_total) + '[/COLOR]',
+            'url': {
+                'tag': tag,
+                'page': next_page,
+                'query': query
+            },
+            'image': '',
+            'type': 'next'
+        }
+
     def make_title(self, quality, author, title, platform):
         if platform == 'T':
             color = '9400D3'
@@ -274,26 +373,12 @@ class GGParser:
             color = '0000FF'
         return '[COLOR=FF%s][B][%s][/B][/COLOR][COLOR=FFFFFF00][%s][/COLOR][COLOR=FF00BFFF][B] %s[/B][/COLOR] - %s' % (color, platform,quality, author, title)
 
+    def make_video_title(self, author, title):
+        return '[COLOR=FF00BFFF][B]%s[/B][/COLOR] - %s' % (author, title)
+
     def local_media(self, file):
         addon_id = self.plugin._addon.getAddonInfo('id')
         return 'special://home/addons/%s/resources/media/%s' % (addon_id, file)
-
-    def _extract_id(self, src):
-        data = re.search('.*player\?(\w*)\\"', src)
-        if data:
-            return 'gg', data.group(1)
-
-        data = re.search('.*\/?channel=(\w*)\\"', src)
-        if data:
-            print u'Twitch'
-            return 'tw', data.group(1)
-
-        # data = re.search('.*\/embed\.php\?c=(\w*)&', src)
-        # if data:
-        #     print u'Cybergame'
-        #     return 'cg', data.group(1)
-
-        return False, False
 
     def extract_twitch_id(self, src):
         data = re.search('.*\/?channel=(\w*)\\"', src)
