@@ -19,8 +19,8 @@ except ImportError:
     urlopen = url_opener
 
 
-from m3u8.model import M3U8, Playlist, IFramePlaylist, Media, Segment
-from m3u8.parser import parse, is_url, ParseError
+from model import M3U8, Playlist, IFramePlaylist, Media, Segment
+from parser import parse, is_url, ParseError
 
 __all__ = ('M3U8', 'Playlist', 'IFramePlaylist', 'Media',
            'Segment', 'loads', 'load', 'parse', 'ParseError')

@@ -7,7 +7,7 @@ import iso8601
 import datetime
 import itertools
 import re
-from m3u8 import protocol
+import protocol
 
 try:
     import exceptions

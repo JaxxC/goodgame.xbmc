@@ -13,7 +13,7 @@ try:
 except ImportError:
     import urllib.parse as url_parser
 
-from m3u8 import parser
+import parser
 
 
 class M3U8(object):
