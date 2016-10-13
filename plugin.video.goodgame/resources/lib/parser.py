@@ -10,16 +10,16 @@ from bs4 import BeautifulSoup
 from twitch import TwitchParser
 
 
-GAMES_URL = 'http://goodgame.ru/channels/'
-GAMES_VIDEOS_URL = 'http://goodgame.ru/video/'
-VIDEOS_PAGE_URL = 'http://goodgame.ru/view'
-VIDEOS_SEARCH_PAGE_URL = 'http://goodgame.ru/search/videos/%s/page/%s/'
-LOGIN_URL = 'http://goodgame.ru/ajax/login/'
-ALL_STREAMS_JSON_URL = 'http://goodgame.ru/ajax/streams/selector/'
+GAMES_URL = 'http://old.goodgame.ru/channels/'
+GAMES_VIDEOS_URL = 'http://old.goodgame.ru/video/'
+VIDEOS_PAGE_URL = 'http://old.goodgame.ru/view'
+VIDEOS_SEARCH_PAGE_URL = 'http://old.goodgame.ru/search/videos/%s/page/%s/'
+LOGIN_URL = 'http://old.goodgame.ru/ajax/login/'
+ALL_STREAMS_JSON_URL = 'http://old.goodgame.ru/ajax/streams/selector/'
 STREAM_DIRECT_URL = 'http://hls.goodgame.ru/hls/%s_%s.m3u8'
 STREAM_SOURCE_URL = 'http://hls.goodgame.ru/hls/%s.m3u8'
-FAV_STREAMS_URL = 'http://goodgame.ru/view/?q=/channels/favorites/'
-ALL_STREAMS_URL = 'http://goodgame.ru/ajax/streams/channels/'
+FAV_STREAMS_URL = 'http://old.goodgame.ru/view/?q=/channels/favorites/'
+ALL_STREAMS_URL = 'http://old.goodgame.ru/ajax/streams/channels/'
 STREAMS_API_URL = 'http://api2.goodgame.ru/v2/streams?game=%s&page=%s'
 CHANNELS_API_URL = 'http://api2.goodgame.ru/v2/streams/%s'
 
